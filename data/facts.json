@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "title": "Doba na Wenus trwa dłużej niż jej rok",
+    "script": "Wenus obraca się wokół własnej osi tak wolno, że jeden jej dzień trwa dłużej niż pełny obieg planety wokół Słońca.",
+    "source": "https://science.nasa.gov/venus/venus-facts/"
+  },
+  {
+    "id": 2,
+    "title": "Ośmiornice mają trzy serca",
+    "script": "Ośmiornica ma trzy serca. Dwa pompują krew do skrzeli, a trzecie rozprowadza ją po reszcie ciała.",
+    "source": "https://ocean.si.edu/ocean-life/invertebrates/octopuses"
+  }
+]
