@@ -1,6 +1,13 @@
 name: Generuj film Faktoryia
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/generate-short.yml"
+      - "src/**"
+      - "data/facts.json"
+      - "requirements.txt"
   workflow_dispatch:
     inputs:
       fact_id:
@@ -11,7 +18,7 @@ on:
     - cron: "0 16 * * *"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   generate:
@@ -44,6 +51,16 @@ jobs:
             python src/generate.py --fact-id "$FACT_ID"
           else
             python src/generate.py
+          fi
+
+      - name: Zapisz historię wykorzystanych faktów
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/history.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Update used fact history"
+            git push
           fi
 
       - name: Zapisz gotowy film jako artefakt
