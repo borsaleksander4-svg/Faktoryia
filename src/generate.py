@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import random
 import shutil
 import subprocess
@@ -250,33 +251,19 @@ def main() -> int:
             for key in ("id", "title", "script", "source"):
                 if key not in item or not str(item[key]).strip():
                     raise ValueError(f"Jeden z faktów nie zawiera poprawnego pola: {key}")
-        history_file = ROOT / "data" / "history.json"
-        if history_file.exists():
-            history_data = json.loads(history_file.read_text(encoding="utf-8"))
-            used_ids = [int(value) for value in history_data.get("used_fact_ids", [])]
-        else:
-            used_ids = []
-
         if args.fact_id is not None:
             matches = [item for item in facts if int(item["id"]) == args.fact_id]
             if not matches:
                 raise ValueError(f"Nie ma faktu o ID {args.fact_id}.")
             fact = matches[0]
+        elif os.environ.get("GITHUB_EVENT_NAME") == "schedule":
+            # One deterministic fact per day: cycle through the list without repeats.
+            day_number = datetime.now(timezone.utc).date().toordinal()
+            fact = facts[day_number % len(facts)]
         else:
-            remaining = [item for item in facts if int(item["id"]) not in used_ids]
-            if not remaining:
-                remaining = facts
-                used_ids = []
-            fact = random.choice(remaining)
+            fact = random.choice(facts)
 
         generate(fact)
-        fact_id = int(fact["id"])
-        used_ids = [value for value in used_ids if value != fact_id]
-        used_ids.append(fact_id)
-        history_file.write_text(
-            json.dumps({"used_fact_ids": used_ids}, ensure_ascii=False, indent=2) + "\n",
-            encoding="utf-8",
-        )
     except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError, subprocess.CalledProcessError, RuntimeError) as exc:
         print(f"BŁĄD GENERATORA: {exc}", file=sys.stderr)
         return 1
