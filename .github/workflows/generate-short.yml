@@ -35,7 +35,7 @@ jobs:
           python -m piper.download_voices --download-dir voices pl_PL-darkman-medium
       - name: Renderuj film 3D
         env:
-          EPISODE_ID: \${{ github.event.inputs.episode_id }}
+          EPISODE_ID: ${{ github.event.inputs.episode_id }}
         run: |
           if [ -n "$EPISODE_ID" ]; then
             python src/generate.py --episode-id "$EPISODE_ID"
