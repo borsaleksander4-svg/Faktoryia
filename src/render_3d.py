@@ -3,8 +3,11 @@ from mathutils import Vector
 a=sys.argv[sys.argv.index("--")+1:] if "--" in sys.argv else []
 idx=int(a[a.index("--scene-index")+1]); prefix=a[a.index("--output")+1]; random.seed(idx+12)
 bpy.ops.object.select_all(action="SELECT"); bpy.ops.object.delete(use_global=False)
-def M(n,c):
- m=bpy.data.materials.new(n); m.diffuse_color=(*c,1); return m
+def M(n,c,rough=.48,metal=0):
+ m=bpy.data.materials.new(n); m.diffuse_color=(*c,1); m.use_nodes=True
+ p=m.node_tree.nodes.get("Principled BSDF")
+ p.inputs["Base Color"].default_value=(*c,1); p.inputs["Roughness"].default_value=rough; p.inputs["Metallic"].default_value=metal
+ return m
 ice=M("Glacier cyan",(.48,.83,.96)); snow=M("Snow",(.92,.97,1)); ocean=M("Deep ocean",(.015,.12,.25)); blue=M("Sea blue",(.04,.35,.57)); dark=M("Midnight",(.035,.08,.16)); wall=M("Buildings",(.19,.3,.42)); window=M("Warm windows",(1,.58,.18)); red=M("Rescue orange",(.95,.2,.08)); skin=M("Skin",(.62,.36,.23)); green=M("Pine",(.035,.23,.15)); land=M("Land",(.12,.37,.25)); cloud=M("Cloud",(.78,.88,.97)); yellow=M("Sun",(1,.65,.2)); fish=M("Fish",(.98,.48,.08))
 def cube(n,p,s,m,b=0):
  bpy.ops.mesh.primitive_cube_add(size=1,location=p); o=bpy.context.object; o.name=n; o.dimensions=s; bpy.ops.object.transform_apply(location=False,rotation=False,scale=True); o.data.materials.append(m)
@@ -15,7 +18,7 @@ def ball(n,p,s,m,v=16):
 def cone(n,p,r,d,m,v=8):
  bpy.ops.mesh.primitive_cone_add(vertices=v,radius1=r,radius2=0,depth=d,location=p); bpy.context.object.data.materials.append(m); return bpy.context.object
 def animate(o,p1,p2):
- o.location=p1; o.keyframe_insert(data_path="location",frame=1); o.location=p2; o.keyframe_insert(data_path="location",frame=24)
+ o.location=p1; o.keyframe_insert(data_path="location",frame=1); o.location=p2; o.keyframe_insert(data_path="location",frame=48)
 def human(x,y,coat):
  ball("Head",(x,y,1.38),(.22,.22,.24),skin)
  cube("Winter coat",(x,y,.82),(.55,.34,.72),coat,.07)
@@ -39,7 +42,7 @@ if idx==0:
  for x in (-5.2,5.2): tree(x,.1)
  human(-1.2,-2.4,red); human(1.1,-2.1,dark)
  for i in range(20):
-  x=random.uniform(-5,5); y=random.uniform(-3,3); shard=ball("Ice spreading",(x,y,.28),(.12,.08,.12),ice,8); shard.keyframe_insert(data_path="scale",frame=1); shard.scale=(.7,.16,.35); shard.keyframe_insert(data_path="scale",frame=24)
+  x=random.uniform(-5,5); y=random.uniform(-3,3); shard=ball("Ice spreading",(x,y,.28),(.12,.08,.12),ice,8); shard.keyframe_insert(data_path="scale",frame=1); shard.scale=(.7,.16,.35); shard.keyframe_insert(data_path="scale",frame=48)
 elif idx==1:
  cube("Ocean",(0,0,-.1),(13,12,.2),ocean)
  for i in range(35):
@@ -58,7 +61,7 @@ elif idx==3:
  for x,y,sx,sy in ((-.9,2.2,.7,.85),(.6,2.4,.7,.5),(1.25,1.6,.4,.7),(-1.4,1.3,.35,.5),(0,1,.55,.4)):
   o=ball("Continents",(x,y,2),(sx,sy,.08),land); o.rotation_euler[1]=-.3
  for z in (4.65,-.65): ball("Polar ice cap",(0,0,z),(1.65,1.65,.2),snow,32)
- globe.rotation_euler=(.12,0,-.2); globe.keyframe_insert(data_path="rotation_euler",frame=1); globe.rotation_euler.z=.4; globe.keyframe_insert(data_path="rotation_euler",frame=24)
+ globe.rotation_euler=(.12,0,-.2); globe.keyframe_insert(data_path="rotation_euler",frame=1); globe.rotation_euler.z=.4; globe.keyframe_insert(data_path="rotation_euler",frame=48)
  ball("Sun",(3.7,1,4.5),(.6,.6,.6),yellow,24)
 elif idx==4:
  cube("Frozen lake",(0,0,0),(12,9,.25),ocean)
@@ -81,6 +84,6 @@ elif idx==5:
  for i in range(25):
   x=random.uniform(-5,5); y=random.uniform(-3,3); z=random.uniform(2,5); f=ball("Snowfall",(x,y,z),(.04,.04,.04),snow,6); animate(f,(x,y,z),(x+.2,y,z-2))
 bpy.ops.object.camera_add(location=(8,-15,9)); cam=bpy.context.object; cam.rotation_euler=(Vector((0,0,2))-cam.location).to_track_quat("-Z","Y").to_euler(); cam.data.type="ORTHO"; cam.data.ortho_scale=12.8; bpy.context.scene.camera=cam
-cam.keyframe_insert(data_path="location",frame=1); cam.location.x=7.3; cam.keyframe_insert(data_path="location",frame=24)
+cam.keyframe_insert(data_path="location",frame=1); cam.location.x=7.3; cam.keyframe_insert(data_path="location",frame=48)
 bpy.ops.object.light_add(type="AREA",location=(1,-8,11)); l=bpy.context.object; l.data.energy=1800; l.data.shape="DISK"; l.data.size=8; l.rotation_euler=(Vector((0,0,1))-l.location).to_track_quat("-Z","Y").to_euler()
-s=bpy.context.scene; s.render.engine="BLENDER_WORKBENCH"; s.display.shading.color_type="MATERIAL"; s.display.shading.light="STUDIO"; s.display.shading.show_shadows=True; s.display.shading.show_cavity=True; s.display.shading.cavity_type="WORLD"; s.display.shading.background_type="WORLD"; s.display.shading.background_color=(.018,.035,.07); s.render.resolution_x=720; s.render.resolution_y=1280; s.render.resolution_percentage=100; s.render.fps=12; s.frame_start=1; s.frame_end=24; s.render.image_settings.file_format="PNG"; s.render.image_settings.color_mode="RGB"; s.world.color=(.018,.035,.07); s.render.filepath=prefix+"_"; s.frame_set(1); bpy.ops.render.render(animation=True)
+s=bpy.context.scene; s.render.engine="BLENDER_EEVEE_NEXT"; s.render.resolution_x=900; s.render.resolution_y=1600; s.render.resolution_percentage=100; s.render.fps=24; s.frame_start=1; s.frame_end=48; s.render.image_settings.file_format="PNG"; s.render.image_settings.color_mode="RGB"; s.render.film_transparent=False; s.view_settings.view_transform="AgX"; s.view_settings.look="AgX - Medium High Contrast"; s.view_settings.exposure=0; s.view_settings.gamma=1; s.world.use_nodes=True; s.world.node_tree.nodes["Background"].inputs["Color"].default_value=(.018,.035,.07,1); s.world.node_tree.nodes["Background"].inputs["Strength"].default_value=.32; s.render.filepath=prefix+"_"; s.frame_set(1); bpy.ops.render.render(animation=True)
