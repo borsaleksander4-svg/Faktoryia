@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate a simple Polish 9:16 fact Short using free local tools."""
+"""Render a vertical Faktoryia Short with animated Venus and neural Polish TTS."""
 
 from __future__ import annotations
 
@@ -11,38 +11,33 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import textwrap
-import wave
+import math
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlparse
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
 ROOT = Path(__file__).resolve().parents[1]
 FACTS_FILE = ROOT / "data" / "facts.json"
 OUTPUT_DIR = ROOT / "output"
-WIDTH, HEIGHT = 1080, 1920
+VOICE_DIR = ROOT / "voices"
+WIDTH, HEIGHT = 540, 960
+FPS = 15
+FRAMES = 120
 
 
 def require_program(name: str) -> str:
     path = shutil.which(name)
     if not path:
-        raise RuntimeError(
-            f"Brakuje programu: {name}. Uruchom generator w workflow GitHub Actions "
-            "albo zainstaluj wymagane narzędzia."
-        )
+        raise RuntimeError(f"Brakuje programu: {name}")
     return path
 
 
-def load_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
+def load_font(size: int, bold: bool = False):
     candidates = [
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-        if bold
-        else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-        "/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf"
-        if bold
-        else "/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf",
     ]
     for candidate in candidates:
         if Path(candidate).exists():
@@ -50,172 +45,157 @@ def load_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont | ImageFo
     return ImageFont.load_default()
 
 
-def wrap_pixels(draw: ImageDraw.ImageDraw, text: str, font: ImageFont.ImageFont, max_width: int) -> list[str]:
+def wrap_text(draw, text, font, max_width):
     words = text.split()
-    lines: list[str] = []
-    current = ""
+    lines, current = [], ""
     for word in words:
-        candidate = f"{current} {word}".strip()
-        if current and draw.textbbox((0, 0), candidate, font=font)[2] > max_width:
+        test = f"{current} {word}".strip()
+        if current and draw.textbbox((0, 0), test, font=font)[2] > max_width:
             lines.append(current)
             current = word
         else:
-            current = candidate
+            current = test
     if current:
         lines.append(current)
     return lines or [""]
 
 
-def draw_centered_block(
-    draw: ImageDraw.ImageDraw,
-    text: str,
-    y: int,
-    font: ImageFont.ImageFont,
-    max_width: int,
-    fill: tuple[int, int, int],
-    line_gap: int = 20,
-) -> int:
-    lines = wrap_pixels(draw, text, font, max_width)
-    for line in lines:
-        box = draw.textbbox((0, 0), line, font=font)
-        line_height = box[3] - box[1]
-        draw.text(((WIDTH - (box[2] - box[0])) / 2, y), line, font=font, fill=fill)
-        y += line_height + line_gap
-    return y
+def make_venus_texture(size: int = 440) -> Image.Image:
+    base = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    px = base.load()
+    center = (size - 1) / 2
+    radius = size * 0.48
+    for y in range(size):
+        for x in range(size):
+            dx, dy = (x - center) / radius, (y - center) / radius
+            rr = dx * dx + dy * dy
+            if rr <= 1:
+                light = max(0.0, 1.0 - math.sqrt(rr))
+                band = math.sin(y * 0.075 + math.sin(x * 0.025) * 2.4)
+                fine = math.sin(y * 0.19 + x * 0.035) * 0.10
+                shade = max(0.0, min(1.0, 0.56 + band * 0.13 + fine + light * 0.28))
+                px[x, y] = (
+                    int(105 + shade * 135),
+                    int(45 + shade * 125),
+                    int(18 + shade * 72),
+                    255,
+                )
+    # Soft atmospheric rim.
+    rim = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    rd = ImageDraw.Draw(rim)
+    rd.ellipse((3, 3, size - 4, size - 4), outline=(255, 205, 130, 190), width=7)
+    rim = rim.filter(ImageFilter.GaussianBlur(7))
+    base.alpha_composite(rim)
+    return base
 
 
-def make_poster(fact: dict, destination: Path) -> None:
-    image = Image.new("RGB", (WIDTH, HEIGHT))
-    pixels = image.load()
-
-    # A simple dark blue-to-purple gradient, generated locally.
-    top = (8, 18, 39)
-    bottom = (37, 20, 58)
+def make_frame(fact: dict, frame_no: int, venus_texture: Image.Image, stars: list[tuple[int, int, int]]) -> Image.Image:
+    t = frame_no / FPS
+    image = Image.new("RGB", (WIDTH, HEIGHT), (5, 8, 22))
+    px = image.load()
     for y in range(HEIGHT):
-        ratio = y / (HEIGHT - 1)
-        color = tuple(int(top[i] * (1 - ratio) + bottom[i] * ratio) for i in range(3))
+        v = y / HEIGHT
+        c = (int(7 + 9 * v), int(12 + 8 * v), int(30 + 24 * v))
         for x in range(WIDTH):
-            pixels[x, y] = color
+            px[x, y] = c
 
     draw = ImageDraw.Draw(image, "RGBA")
+    # Stars twinkle gently.
+    for x, y, phase in stars:
+        alpha = int(90 + 80 * (0.5 + 0.5 * math.sin(t * 2.0 + phase)))
+        draw.ellipse((x, y, x + 2, y + 2), fill=(220, 230, 255, alpha))
 
-    # Subtle decorative circles and lines.
-    draw.ellipse((760, 100, 1210, 550), outline=(104, 126, 255, 65), width=5)
-    draw.ellipse((-190, 1280, 250, 1720), outline=(255, 190, 90, 45), width=5)
-    for x in range(80, WIDTH, 100):
-        draw.line((x, 250, x + 110, 170), fill=(170, 180, 255, 18), width=2)
+    # Slow orbital rings behind Venus.
+    ring_box = (38, 260, 502, 720)
+    draw.ellipse(ring_box, outline=(255, 183, 110, 55), width=2)
+    draw.ellipse((65, 290, 475, 690), outline=(160, 175, 255, 35), width=1)
 
-    white = (248, 249, 255, 255)
-    muted = (187, 197, 220, 255)
-    accent = (255, 198, 92, 255)
+    # Rotate the cloud texture to create a visible animated planet.
+    angle = -frame_no * 1.2
+    planet = venus_texture.rotate(angle, resample=Image.Resampling.BICUBIC)
+    glow = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
+    gd = ImageDraw.Draw(glow)
+    gd.ellipse((62, 270, 478, 686), fill=(255, 151, 70, 38))
+    glow = glow.filter(ImageFilter.GaussianBlur(28))
+    image = Image.alpha_composite(image.convert("RGBA"), glow)
+    image.alpha_composite(planet, (50, 258))
+    draw = ImageDraw.Draw(image, "RGBA")
 
-    brand_font = load_font(36, bold=True)
-    tag_font = load_font(27, bold=True)
-    title_font = load_font(77, bold=True)
-    section_font = load_font(29, bold=True)
-    body_font = load_font(52, bold=False)
-    footer_font = load_font(25, bold=True)
+    # Header.
+    title_font = load_font(27, True)
+    small_font = load_font(15, True)
+    body_font = load_font(22, True)
+    draw.rounded_rectangle((28, 38, 218, 76), radius=18, fill=(255, 255, 255, 22), outline=(255, 255, 255, 60), width=1)
+    draw.text((44, 47), "FAKTORYIA", font=small_font, fill=(255, 214, 155, 255))
+    draw.text((30, 118), "CZY WIESZ, ŻE…", font=small_font, fill=(255, 195, 120, 255))
+    title_lines = wrap_text(draw, str(fact["title"]), title_font, 480)
+    y = 148
+    for line in title_lines[:3]:
+        draw.text((30, y), line, font=title_font, fill=(250, 248, 244, 255), stroke_width=1, stroke_fill=(15, 12, 25, 220))
+        y += 36
 
-    # Brand and number label.
-    draw.rounded_rectangle((70, 78, 430, 150), radius=34, fill=(255, 255, 255, 22), outline=(255, 255, 255, 55), width=2)
-    draw.text((105, 94), "FAKTORYIA", font=brand_font, fill=white)
-    draw.rounded_rectangle((690, 88, 1010, 148), radius=28, fill=(255, 198, 92, 28), outline=(255, 198, 92, 95), width=2)
-    label = f"FAKT NR {int(fact['id']):02d}"
-    label_box = draw.textbbox((0, 0), label, font=tag_font)
-    draw.text((850 - (label_box[2] - label_box[0]) / 2, 103), label, font=tag_font, fill=accent)
-
-    # Headline.
-    draw.text((80, 330), "CZY WIESZ, ŻE...", font=section_font, fill=accent)
-    title_end = draw_centered_block(
-        draw, str(fact["title"]), 430, title_font, 900, white, line_gap=24
-    )
-
-    # Main fact card.
-    card_top = max(820, title_end + 70)
-    card_bottom = 1500
-    draw.rounded_rectangle(
-        (58, card_top, 1022, card_bottom),
-        radius=44,
-        fill=(255, 255, 255, 20),
-        outline=(255, 255, 255, 55),
-        width=3,
-    )
-    draw.text((112, card_top + 58), "TAK WYGLĄDA FAKT", font=section_font, fill=accent)
-
-    body_text = str(fact["script"])
-    selected_font = body_font
-    lines = wrap_pixels(draw, body_text, selected_font, 840)
-    while len(lines) * 76 > (card_bottom - card_top - 210) and selected_font.size > 38:
-        selected_font = load_font(selected_font.size - 2, bold=False)
-        lines = wrap_pixels(draw, body_text, selected_font, 840)
-
-    y = card_top + 145
-    for line in lines:
-        box = draw.textbbox((0, 0), line, font=selected_font)
-        line_height = box[3] - box[1]
-        draw.text((112, y), line, font=selected_font, fill=white)
-        y += line_height + 25
-
-    draw.text((80, 1610), "JEDNA CIEKAWOSTKA. ZERO ZGADYWANIA.", font=footer_font, fill=muted)
-    draw.text((80, 1680), "ŹRÓDŁO I LINK ZNAJDZIESZ W OPISIE FILMU", font=footer_font, fill=accent)
-    draw.rounded_rectangle((80, 1795, 1000, 1805), radius=5, fill=(255, 198, 92, 190))
-    image.save(destination, format="PNG", optimize=True)
-
-
-def clean_sentence(text: str) -> str:
-    return text.strip().rstrip(".!? ").strip()
+    # Bottom fact panel, with no source URL on screen.
+    draw.rounded_rectangle((24, 738, 516, 910), radius=24, fill=(12, 18, 38, 220), outline=(255, 195, 120, 100), width=2)
+    body = str(fact["script"])
+    lines = wrap_text(draw, body, body_font, 440)
+    y = 765
+    for line in lines[:4]:
+        draw.text((48, y), line, font=body_font, fill=(240, 243, 250, 255))
+        y += 31
+    draw.text((30, 925), "ŹRÓDŁO W OPISIE FILMU", font=small_font, fill=(255, 195, 120, 255))
+    # Animated progress indicator.
+    progress = (frame_no + 1) / FRAMES
+    draw.rounded_rectangle((30, 950, 510, 955), radius=3, fill=(80, 87, 112, 180))
+    draw.rounded_rectangle((30, 950, 30 + int(480 * progress), 955), radius=3, fill=(255, 190, 115, 255))
+    return image.convert("RGB")
 
 
 def generate(fact: dict) -> Path:
-    espeak = require_program("espeak-ng")
-    ffmpeg = require_program("ffmpeg")
+    require_program("ffmpeg")
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-
     fact_id = int(fact["id"])
     stamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     base = f"faktoryia_{fact_id:03d}_{stamp}"
     video_path = OUTPUT_DIR / f"{base}.mp4"
-    copy_path = OUTPUT_DIR / f"{base}_opis.txt"
+    description_path = OUTPUT_DIR / f"{base}_opis.txt"
 
-    script = clean_sentence(str(fact["script"]))
+    script = str(fact["script"]).strip()
     if not script:
         raise ValueError(f"Fakt {fact_id} nie ma tekstu do narracji.")
-    narration = f"Czy wiesz, że {script[0].lower() + script[1:]}. Źródło znajdziesz w opisie."
+    narration = f"Czy wiesz, że {script}"
 
     with tempfile.TemporaryDirectory() as temp_dir:
         temp = Path(temp_dir)
-        poster = temp / "poster.png"
         audio = temp / "narration.wav"
-        make_poster(fact, poster)
+        frames_dir = temp / "frames"
+        frames_dir.mkdir()
+        voice_model = VOICE_DIR / "pl_PL-darkman-medium.onnx"
+        if not voice_model.exists():
+            raise RuntimeError("Brak modelu głosu Piper: pl_PL-darkman-medium")
 
         subprocess.run(
-            [espeak, "-v", "pl", "-s", "146", "-p", "48", "-a", "170", "-w", str(audio), narration],
+            [sys.executable, "-m", "piper", "--data-dir", str(VOICE_DIR), "-m", "pl_PL-darkman-medium", "-f", str(audio), "--", narration],
             check=True,
             capture_output=True,
             text=True,
         )
 
-        with wave.open(str(audio), "rb") as wav_file:
-            duration = wav_file.getnframes() / float(wav_file.getframerate())
-        if duration <= 0:
-            raise RuntimeError("Lektor nie wygenerował poprawnego pliku audio.")
+        venus = make_venus_texture()
+        rng = random.Random(42)
+        stars = [(rng.randrange(WIDTH), rng.randrange(HEIGHT), rng.randrange(100)) for _ in range(70)]
+        for index in range(FRAMES):
+            frame = make_frame(fact, index, venus, stars)
+            frame.save(frames_dir / f"frame_{index:04d}.png", optimize=True)
 
-        # Slow zoom makes the static poster feel less motionless.
-        video_filter = (
-            "zoompan=z='min(zoom+0.00035,1.06)':"
-            "x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':"
-            "d=1:s=1080x1920:fps=30,format=yuv420p"
-        )
+        ffmpeg = shutil.which("ffmpeg")
         subprocess.run(
             [
                 ffmpeg, "-y", "-hide_banner", "-loglevel", "error",
-                "-loop", "1", "-i", str(poster), "-i", str(audio),
-                "-vf", video_filter, "-t", f"{duration:.3f}",
-                "-r", "30", "-c:v", "libx264", "-preset", "veryfast",
-                "-crf", "23", "-c:a", "aac", "-b:a", "160k",
-                "-shortest", "-movflags", "+faststart",
-                "-metadata", f"title={fact['title']}",
-                str(video_path),
+                "-framerate", str(FPS), "-i", str(frames_dir / "frame_%04d.png"),
+                "-i", str(audio), "-vf", "scale=1080:1920:flags=lanczos,format=yuv420p",
+                "-c:v", "libx264", "-preset", "veryfast", "-crf", "22",
+                "-c:a", "aac", "-b:a", "160k", "-shortest", "-movflags", "+faststart",
+                "-metadata", f"title={fact['title']}", str(video_path),
             ],
             check=True,
             capture_output=True,
@@ -223,14 +203,12 @@ def generate(fact: dict) -> Path:
         )
 
     source = str(fact["source"])
-    domain = urlparse(source).netloc or source
-    copy_path.write_text(
-        f"{fact['title']}\n\n{script}.\n\nŹródło: {source}\n",
+    description_path.write_text(
+        f"{fact['title']}\n\n{script}\n\nŹródło:\n{source}\n\n#ciekawostki #kosmos #nauka #shorts\n",
         encoding="utf-8",
     )
     print(f"Gotowe wideo: {video_path}")
-    print(f"Opis i źródło: {copy_path}")
-    print(f"Czas narracji: {duration:.1f} s | Źródło: {domain}")
+    print(f"Opis filmu: {description_path}")
     return video_path
 
 
@@ -238,11 +216,6 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Generator polskich filmów Faktoryia Shorts.")
     parser.add_argument("--fact-id", type=int, help="ID konkretnej ciekawostki. Bez tej opcji wybór jest losowy.")
     args = parser.parse_args()
-
-    if not FACTS_FILE.exists():
-        print(f"Nie znaleziono pliku z faktami: {FACTS_FILE}", file=sys.stderr)
-        return 1
-
     try:
         facts = json.loads(FACTS_FILE.read_text(encoding="utf-8"))
         if not isinstance(facts, list) or not facts:
@@ -250,19 +223,17 @@ def main() -> int:
         for item in facts:
             for key in ("id", "title", "script", "source"):
                 if key not in item or not str(item[key]).strip():
-                    raise ValueError(f"Jeden z faktów nie zawiera poprawnego pola: {key}")
+                    raise ValueError(f"Brak poprawnego pola: {key}")
         if args.fact_id is not None:
             matches = [item for item in facts if int(item["id"]) == args.fact_id]
             if not matches:
                 raise ValueError(f"Nie ma faktu o ID {args.fact_id}.")
             fact = matches[0]
         elif os.environ.get("GITHUB_EVENT_NAME") == "schedule":
-            # One deterministic fact per day: cycle through the list without repeats.
             day_number = datetime.now(timezone.utc).date().toordinal()
             fact = facts[day_number % len(facts)]
         else:
             fact = random.choice(facts)
-
         generate(fact)
     except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError, subprocess.CalledProcessError, RuntimeError) as exc:
         print(f"BŁĄD GENERATORA: {exc}", file=sys.stderr)
