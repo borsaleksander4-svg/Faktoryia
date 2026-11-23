@@ -50,5 +50,10 @@ elif idx>=5:
   a=i*math.tau/10; ball("Ice cap",(math.cos(a)*1.7,math.sin(a)*1.7,3),(.8,.45,.2),ice,8)
  earth.keyframe_insert(data_path="rotation_euler",frame=1); earth.rotation_euler[2]=math.tau; earth.keyframe_insert(data_path="rotation_euler",frame=24)
 scene=bpy.context.scene
-scene.render.engine="BLENDER_EEVEE"
+scene.render.engine="BLENDER_WORKBENCH"
+scene.display.shading.color_type="MATERIAL"
+scene.display.shading.light="STUDIO"
+scene.display.shading.show_shadows=True
+scene.display.shading.show_cavity=True
+scene.display.shading.background_type="WORLD"
 scene.render.resolution_x=480; scene.render.resolution_y=854; scene.render.resolution_percentage=100; scene.render.fps=12; scene.frame_start=1; scene.frame_end=24; scene.render.image_settings.file_format="PNG"; scene.render.image_settings.color_mode="RGB"; scene.world.color=(.025,.045,.08); scene.render.filepath=prefix+"_"; scene.frame_set(1); bpy.ops.render.render(animation=True)
