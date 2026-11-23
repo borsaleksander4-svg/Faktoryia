@@ -1,14 +1,33 @@
 [
   {
     "id": 1,
-    "title": "Doba na Wenus trwa dłużej niż jej rok",
-    "script": "Wenus obraca się wokół własnej osi tak wolno, że jeden jej dzień trwa dłużej niż pełny obieg planety wokół Słońca.",
-    "source": "https://science.nasa.gov/venus/venus-facts/"
-  },
-  {
-    "id": 2,
-    "title": "Ośmiornice mają trzy serca",
-    "script": "Ośmiornica ma trzy serca. Dwa pompują krew do skrzeli, a trzecie rozprowadza ją po reszcie ciała.",
-    "source": "https://ocean.si.edu/ocean-life/invertebrates/octopuses"
+    "title": "Co, gdyby cała woda na Ziemi natychmiast zamieniła się w lód?",
+    "description": "Wyobraź sobie, że w jednej chwili oceany, rzeki, jeziora, woda pod ziemią i para wodna w atmosferze zamarzają. To eksperyment myślowy: w rzeczywistości przemiana wymagałaby odebrania ogromnej ilości energii.",
+    "script": "Wyobraź sobie, że patrzysz na ocean… i w jednej chwili cała woda na Ziemi zamienia się w lód. Nie tylko morza i rzeki. Także jeziora, woda w glebie, podziemne zbiorniki, para wodna w atmosferze, a nawet woda znajdująca się w organizmach. Co stałoby się z naszą planetą? Najpierw ważne zastrzeżenie: to eksperyment myślowy. W prawdziwym świecie zamrożenie takiej ilości wody wymagałoby odebrania niewyobrażalnej ilości energii. Załóżmy jednak, że tajemnicza siła robi to natychmiast. Pierwszy szok? Znikają wszystkie płynące rzeki i jeziora. Powierzchnia oceanów staje się lodową skorupą. A ponieważ woda stanowi około siedemdziesięciu jeden procent powierzchni Ziemi, niebieska planeta zaczyna wyglądać jak śnieżna kula. Ale to dopiero początek. Około dziewięćdziesięciu sześciu i pół procent całej ziemskiej wody znajduje się w oceanach. Ich zamarznięcie oznaczałoby koniec normalnego obiegu wody. Nie byłoby zwykłego parowania z mórz, chmur tworzonych w dotychczasowy sposób ani deszczu, który zasila rzeki i rośliny. Zmieniłby się też klimat. Jasna powierzchnia lodu odbija dużo światła słonecznego, więc Ziemia pochłaniałaby mniej energii. Oceaniczne prądy, które przenoszą ciepło po planecie, przestałyby działać tak jak dziś. Skutki odczułoby życie na całym świecie. Organizmy wodne straciłyby swoje płynne środowisko, rośliny nie mogłyby pobierać wody z zamarzniętej gleby, a ludzie straciliby dostęp do zwykłej wody pitnej. Co z wodą w atmosferze? Para wodna również stałaby się lodem, więc pogoda wyglądałaby zupełnie inaczej. Czy ludzkość mogłaby przetrwać? Tylko w specjalnie ogrzewanych i zaopatrywanych schronieniach, a i to byłoby niezwykle trudne. Najbardziej przerażające jest to, że Ziemia nie potrzebuje kosmicznej katastrofy, żeby stać się nieprzyjazna. Wystarczyłoby odebrać jej coś, co zwykle uznajemy za oczywiste: płynną wodę. A teraz pomyśl: czy planeta pokryta lodem nadal byłaby naszym domem?",
+    "sources": [
+      "https://science.nasa.gov/earth/earth-observatory/the-water-cycle/",
+      "https://oceanservice.noaa.gov/facts/sea-ice-climate.html",
+      "https://science.nasa.gov/kids/earth/what-is-the-water-cycle/"
+    ],
+    "scenes": [
+      {
+        "caption": "CAŁA WODA ZIEMI ZAMARZA"
+      },
+      {
+        "caption": "OCEANY ZAMIENIAJĄ SIĘ W LÓD"
+      },
+      {
+        "caption": "ZAMARZA NAWET WODA W ATMOSFERZE"
+      },
+      {
+        "caption": "ZIEMIA ODBIJA WIĘCEJ ŚWIATŁA"
+      },
+      {
+        "caption": "ŻYCIE TRACI DOSTĘP DO PŁYNNEJ WODY"
+      },
+      {
+        "caption": "CZY LUDZKOŚĆ PRZETRWA?"
+      }
+    ]
   }
 ]
