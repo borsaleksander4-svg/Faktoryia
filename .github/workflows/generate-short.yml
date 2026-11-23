@@ -10,7 +10,7 @@ on:
       - "requirements.txt"
   workflow_dispatch:
     inputs:
-      fact_id:
+      episode_id:
         description: "ID ciekawostki (puste = losowa)"
         required: false
         type: string
@@ -22,9 +22,9 @@ permissions:
 
 jobs:
   generate:
-    name: Renderuj animowany polski Short
+    name: Renderuj dwuminutowy odcinek What If
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     steps:
       - name: Pobierz repozytorium
         uses: actions/checkout@v7
@@ -44,17 +44,17 @@ jobs:
           python -m piper.download_voices --download-dir voices pl_PL-darkman-medium
       - name: Wygeneruj animowany film
         env:
-          FACT_ID: ${{ github.event.inputs.fact_id }}
+          FACT_ID: ${{ github.event.inputs.episode_id }}
         run: |
           if [ -n "$FACT_ID" ]; then
-            python src/generate.py --fact-id "$FACT_ID"
+            python src/generate.py --episode-id "$FACT_ID"
           else
             python src/generate.py
           fi
       - name: Zapisz gotowy film i opis
         uses: actions/upload-artifact@v7
         with:
-          name: faktoryia-animowany-short
+          name: faktoryia-what-if-odcinek
           path: output/
           if-no-files-found: error
           retention-days: 7
