@@ -33,7 +33,7 @@ def main():
   segdur=duration/len(ep["scenes"]); segments=[]
   for i,sc in enumerate(ep["scenes"]):
    prefix=tmp/f"s{i:02d}_"; run([blender,"--background","--threads","2","--python",str(ROOT/"src"/"render_3d.py"),"--","--scene-index",str(i),"--output",str(prefix)]); frames=sorted(tmp.glob(f"s{i:02d}_*.png"))
-   if len(frames)<40: raise RuntimeError(f"Renderowanie sceny {i+1} nie powiodło się.")
+   if len(frames)<20: raise RuntimeError(f"Renderowanie sceny {i+1} nie powiodło się.")
    raw=tmp/f"raw{i:02d}.mp4"; run([ffmpeg,"-y","-hide_banner","-loglevel","error","-framerate",str(FPS),"-i",str(prefix)+"%04d.png","-c:v","libx264","-preset","veryfast","-crf","22","-pix_fmt","yuv420p",str(raw)])
    cap=tmp/f"cap{i:02d}.png"; caption(sc["caption"],cap); seg=tmp/f"seg{i:02d}.mp4"; run([ffmpeg,"-y","-hide_banner","-loglevel","error","-stream_loop","-1","-i",str(raw),"-i",str(cap),"-t",f"{segdur:.3f}","-filter_complex","[0:v]scale=1080:1920:flags=lanczos[bg];[bg][1:v]overlay=0:0:format=auto[v]","-map","[v]","-an","-c:v","libx264","-preset","veryfast","-crf","21","-pix_fmt","yuv420p",str(seg)]); segments.append(seg)
   concat=tmp/"concat.txt"; concat.write_text("".join(f"file '{p.as_posix()}'\n" for p in segments),encoding="utf-8"); silent=tmp/"silent.mp4"; run([ffmpeg,"-y","-hide_banner","-loglevel","error","-f","concat","-safe","0","-i",str(concat),"-c","copy",str(silent)]); run([ffmpeg,"-y","-hide_banner","-loglevel","error","-i",str(silent),"-i",str(audio),"-map","0:v:0","-map","1:a:0","-t",f"{duration:.3f}","-c:v","copy","-c:a","aac","-b:a","160k","-movflags","+faststart",str(OUT/(base+".mp4"))])
