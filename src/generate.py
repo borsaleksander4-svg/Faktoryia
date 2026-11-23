@@ -33,6 +33,7 @@ def main():
   segdur=duration/len(ep["scenes"]); segments=[]
   for i,sc in enumerate(ep["scenes"]):
    prefix=tmp/f"s{i:02d}_"; run([blender,"--background","--threads","2","--python",str(ROOT/"src"/"render_3d.py"),"--","--scene-index",str(i),"--output",str(prefix)]); frames=sorted(tmp.glob(f"s{i:02d}_*.png"))
+   print("RENDERED FILES:", [p.name for p in tmp.iterdir() if p.suffix==".png"][:12], "COUNT:", len(frames));
    if len(frames)<20: raise RuntimeError(f"Renderowanie sceny {i+1} nie powiodło się.")
    raw=tmp/f"raw{i:02d}.mp4"; run([ffmpeg,"-y","-hide_banner","-loglevel","error","-framerate",str(FPS),"-start_number","1","-i",str(prefix)+"_%04d.png","-c:v","libx264","-preset","veryfast","-crf","22","-pix_fmt","yuv420p",str(raw)])
    cap=tmp/f"cap{i:02d}.png"; caption(sc["caption"],cap); seg=tmp/f"seg{i:02d}.mp4"; run([ffmpeg,"-y","-hide_banner","-loglevel","error","-stream_loop","-1","-i",str(raw),"-i",str(cap),"-t",f"{segdur:.3f}","-filter_complex","[0:v]scale=1080:1920:flags=lanczos[bg];[bg][1:v]overlay=0:0:format=auto[v]","-map","[v]","-an","-c:v","libx264","-preset","veryfast","-crf","21","-pix_fmt","yuv420p",str(seg)]); segments.append(seg)
