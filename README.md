@@ -1,60 +1,51 @@
 # Faktoryia
 
-Automatyczny generator polskich filmów YouTube Shorts z ciekawostkami.
+Automatyczny generator około dwuminutowych polskich filmów w stylu **„Co, gdyby…?”**.
 
-## Co robi obecna wersja
+## Jak działa
 
-- Wybiera ciekawostkę z `data/facts.json`.
-- W automatycznym harmonogramie przechodzi przez listę faktów dzień po dniu, bez natychmiastowych powtórek.
-- Tworzy polską narrację głosową przez darmowy syntezator eSpeak NG.
-- Projektuje pionową planszę 1080 × 1920.
-- Łączy obraz i narrację w plik MP4 w formacie 9:16.
-- Dodaje plik tekstowy z opisem i linkiem do źródła.
-- Udostępnia oba pliki jako artefakt GitHub Actions.
+- Wybiera odcinek z `data/facts.json`.
+- Generuje polską narrację neuronowym głosem Piper.
+- Tworzy sześć ilustracyjnych scen dopasowanych do historii.
+- Dodaje delikatny ruch kamery, napisy rozdziałów i montuje pionowe wideo 1080 × 1920.
+- Dopasowuje długość filmu do nagrania lektora (docelowo około 2 minut).
+- Zapisuje film MP4 oraz osobny plik TXT z opisem i źródłami.
+- Udostępnia gotowe pliki jako artefakt GitHub Actions.
 
 ## Uruchamianie
 
 ### Automatycznie
-
-Workflow jest zaplanowany na każdy dzień o 16:00 UTC. Godzina odpowiada 17:00 w Polsce zimą i 18:00 latem. Każde uruchomienie generuje jeden film. Przy uruchomieniu automatycznym wybór faktu przechodzi po liście kolejno, dzień po dniu.
+Workflow uruchamia się codziennie o 16:00 UTC (17:00 zimą / 18:00 latem w Polsce).
 
 ### Ręcznie
+1. Otwórz repozytorium Faktoryia.
+2. Wejdź w Actions.
+3. Wybierz „Generuj film Faktoryia”.
+4. Kliknij Run workflow.
+5. Opcjonalnie wpisz `episode_id` z `data/facts.json`.
+6. Po zakończeniu pobierz artefakt `faktoryia-what-if-odcinek`.
 
-1. Otwórz repozytorium **Faktoryia** na GitHubie.
-2. Wejdź w zakładkę **Actions**.
-3. Wybierz workflow **Generuj film Faktoryia**.
-4. Kliknij **Run workflow**.
-5. Pole `fact_id` pozostaw puste, aby wybrać losową ciekawostkę, albo wpisz ID konkretnego faktu z `data/facts.json`.
-6. Po zakończeniu otwórz wykonanie workflow i pobierz artefakt **faktoryia-short**.
+## Dodawanie odcinków
 
-W archiwum ZIP znajdziesz film MP4 oraz plik TXT z opisem i źródłem. Artefakt jest przechowywany przez 7 dni, więc pobierz go przed upływem tego czasu.
+Każdy odcinek musi zawierać:
+- `id` – unikalny numer,
+- `title` – tytuł pytania „Co, gdyby…?”,
+- `description` – krótki opis do publikacji,
+- `script` – pełny tekst narracji (około 180–300 słów),
+- `sources` – lista wiarygodnych źródeł,
+- `scenes` – co najmniej pięć krótkich podpisów scen.
 
-## Dodawanie kolejnych ciekawostek
-
-Dopisz do `data/facts.json` kolejny obiekt z unikalnym `id`, tytułem, tekstem narracji i wiarygodnym adresem źródła:
-
-```json
-{
-  "id": 3,
-  "title": "Tytuł ciekawostki",
-  "script": "Krótki tekst, który ma zostać przeczytany przez lektora.",
-  "source": "https://example.org/źródło"
-}
-```
-
-Dodanie lub zmiana faktu automatycznie uruchomi generator.
+Generator sprawdza długość lektora. Jeśli narracja trwa mniej niż 95 sekund lub więcej niż 155 sekund, przerwie budowanie zamiast tworzyć film o złej długości.
 
 ## Koszt i ograniczenia
 
-Projekt używa GitHub Actions, Pythona, Pillow, FFmpeg i eSpeak NG. Nie używa płatnych API, kluczy API ani płatnych subskrypcji. Repozytorium jest publiczne, więc standardowe GitHub-hosted runners dla tego repozytorium są bezpłatne.
+Projekt używa darmowych narzędzi: GitHub Actions, Python, Pillow, FFmpeg i Piper. Nie korzysta z płatnych API ani subskrypcji. Lektor jest syntezowany lokalnie w maszynie GitHub Actions.
 
-Lektor eSpeak NG jest wyraźnie syntetyczny i brzmi bardziej mechanicznie niż komercyjne głosy AI. Obecna wersja tworzy prosty film z planszą i delikatnym ruchem kamery, a nie rozbudowany montaż z nagraniami wideo.
-
-**Publikacja na YouTube nie jest automatyczna.** Gotowy film trzeba sprawdzić, a następnie ręcznie przesłać na kanał.
+Animacje są obecnie tworzone z ilustracji 2D i ruchu kamery. To nie jest jeszcze generator realistycznych klipów wideo AI. Publikacja na YouTube nie jest automatyczna: przed publikacją człowiek powinien sprawdzić film, opis i źródła.
 
 ## Struktura
 
-- `.github/workflows/generate-short.yml` — harmonogram i budowanie filmu.
-- `data/facts.json` — baza ciekawostek.
-- `src/generate.py` — generator grafiki, narracji i MP4.
-- `requirements.txt` — biblioteki Pythona.
+- `.github/workflows/generate-short.yml` – automatyzacja.
+- `data/facts.json` – scenariusze odcinków.
+- `src/generate.py` – generator scen, narracji i MP4.
+- `requirements.txt` – zależności Pythona.
