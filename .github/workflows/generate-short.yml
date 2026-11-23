@@ -44,7 +44,7 @@ jobs:
           python -m piper.download_voices --download-dir voices pl_PL-darkman-medium
       - name: Wygeneruj animowany film
         env:
-          FACT_ID: \${{ inputs.fact_id }}
+          FACT_ID: ${{ github.event.inputs.fact_id }}
         run: |
           if [ -n "$FACT_ID" ]; then
             python src/generate.py --fact-id "$FACT_ID"
