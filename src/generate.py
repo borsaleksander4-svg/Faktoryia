@@ -3,7 +3,7 @@ import argparse,json,shutil,subprocess,sys,tempfile
 from datetime import datetime,timezone
 from pathlib import Path
 from PIL import Image,ImageDraw,ImageFont
-ROOT=Path(__file__).resolve().parents[1]; DATA=ROOT/"data"/"facts.json"; OUT=ROOT/"output"; VOICE=ROOT/"voices"; FPS=12
+ROOT=Path(__file__).resolve().parents[1]; DATA=ROOT/"data"/"facts.json"; OUT=ROOT/"output"; VOICE=ROOT/"voices"; FPS=24
 def run(c):
  try: subprocess.run(c,check=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
  except subprocess.CalledProcessError as e:
