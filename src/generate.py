@@ -203,8 +203,9 @@ def generate(fact: dict) -> Path:
         )
 
     source = str(fact["source"])
+    topic_tag = "#kosmos" if "wenus" in (str(fact["title"]) + " " + source).lower() else "#zwierzeta"
     description_path.write_text(
-        f"{fact['title']}\n\n{script}\n\nŹródło:\n{source}\n\n#ciekawostki #kosmos #nauka #shorts\n",
+        f"{fact['title']}\n\n{script}\n\nŹródło:\n{source}\n\n#ciekawostki {topic_tag} #nauka #shorts\n",
         encoding="utf-8",
     )
     print(f"Gotowe wideo: {video_path}")
@@ -232,6 +233,9 @@ def main() -> int:
         elif os.environ.get("GITHUB_EVENT_NAME") == "schedule":
             day_number = datetime.now(timezone.utc).date().toordinal()
             fact = facts[day_number % len(facts)]
+        elif os.environ.get("GITHUB_EVENT_NAME") == "push":
+            # A repository update produces a predictable demo: the Venus fact matches the planet animation.
+            fact = facts[0]
         else:
             fact = random.choice(facts)
         generate(fact)
