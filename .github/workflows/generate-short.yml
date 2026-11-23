@@ -1,0 +1,55 @@
+name: Generuj film Faktoryia
+
+on:
+  workflow_dispatch:
+    inputs:
+      fact_id:
+        description: "ID ciekawostki (puste = losowa)"
+        required: false
+        type: string
+  schedule:
+    - cron: "0 16 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    name: Renderuj polski Short
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Pobierz repozytorium
+        uses: actions/checkout@v7
+
+      - name: Przygotuj Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Zainstaluj darmowe narzędzia
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends ffmpeg espeak-ng fonts-dejavu-core
+
+      - name: Zainstaluj bibliotekę obrazu
+        run: python -m pip install -r requirements.txt
+
+      - name: Wygeneruj film
+        env:
+          FACT_ID: ${{ inputs.fact_id }}
+        run: |
+          if [ -n "$FACT_ID" ]; then
+            python src/generate.py --fact-id "$FACT_ID"
+          else
+            python src/generate.py
+          fi
+
+      - name: Zapisz gotowy film jako artefakt
+        uses: actions/upload-artifact@v7
+        with:
+          name: faktoryia-short
+          path: output/
+          if-no-files-found: error
+          retention-days: 7
