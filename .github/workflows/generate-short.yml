@@ -22,41 +22,39 @@ permissions:
 
 jobs:
   generate:
-    name: Renderuj polski Short
+    name: Renderuj animowany polski Short
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-
+    timeout-minutes: 20
     steps:
       - name: Pobierz repozytorium
         uses: actions/checkout@v7
-
       - name: Przygotuj Python
         uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-
-      - name: Zainstaluj darmowe narzędzia
+      - name: Zainstaluj FFmpeg i czcionki
         run: |
           sudo apt-get update
-          sudo apt-get install --yes --no-install-recommends ffmpeg espeak-ng fonts-dejavu-core
-
-      - name: Zainstaluj bibliotekę obrazu
+          sudo apt-get install --yes --no-install-recommends ffmpeg fonts-dejavu-core
+      - name: Zainstaluj biblioteki
         run: python -m pip install -r requirements.txt
-
-      - name: Wygeneruj film
+      - name: Pobierz polski głos neuronowy Piper
+        run: |
+          mkdir -p voices
+          python -m piper.download_voices --download-dir voices pl_PL-darkman-medium
+      - name: Wygeneruj animowany film
         env:
-          FACT_ID: ${{ inputs.fact_id }}
+          FACT_ID: \${{ inputs.fact_id }}
         run: |
           if [ -n "$FACT_ID" ]; then
             python src/generate.py --fact-id "$FACT_ID"
           else
             python src/generate.py
           fi
-
-      - name: Zapisz gotowy film jako artefakt
+      - name: Zapisz gotowy film i opis
         uses: actions/upload-artifact@v7
         with:
-          name: faktoryia-short
+          name: faktoryia-animowany-short
           path: output/
           if-no-files-found: error
           retention-days: 7
