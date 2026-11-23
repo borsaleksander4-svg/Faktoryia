@@ -274,7 +274,7 @@ def main() -> int:
         used_ids = [value for value in used_ids if value != fact_id]
         used_ids.append(fact_id)
         history_file.write_text(
-            json.dumps({"used_fact_ids": used_ids}, ensure_ascii=False, indent=2) + "\x5cn",
+            json.dumps({"used_fact_ids": used_ids}, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
         )
     except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError, subprocess.CalledProcessError, RuntimeError) as exc:
