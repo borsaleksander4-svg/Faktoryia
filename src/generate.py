@@ -5,7 +5,11 @@ from pathlib import Path
 from PIL import Image,ImageDraw,ImageFont
 ROOT=Path(__file__).resolve().parents[1]; DATA=ROOT/"data"/"facts.json"; OUT=ROOT/"output"; VOICE=ROOT/"voices"; FPS=24
 def run(c):
- try: subprocess.run(c,check=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+ try:
+  p=subprocess.run(c,check=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+  if c and "blender" in str(c[0]).lower():
+   print("BLENDER STDOUT:",p.stdout[-5000:]); print("BLENDER STDERR:",p.stderr[-5000:])
+
  except subprocess.CalledProcessError as e:
   print("COMMAND FAILED:", " ".join(map(str,c)), file=sys.stderr)
   print(e.stdout or "", file=sys.stderr); print(e.stderr or "", file=sys.stderr); raise
