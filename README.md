@@ -6,7 +6,7 @@ Automatyczny generator około dwuminutowych polskich filmów w stylu **„Co, gd
 
 - Wybiera odcinek z `data/facts.json`.
 - Generuje polską narrację neuronowym głosem Piper.
-- Tworzy sześć ilustracyjnych scen dopasowanych do historii.
+- Renderuje sześć animowanych scen 3D w Blenderze, z miastem, postaciami, wodą i lodem.
 - Dodaje delikatny ruch kamery, napisy rozdziałów i montuje pionowe wideo 1080 × 1920.
 - Dopasowuje długość filmu do nagrania lektora (docelowo około 2 minut).
 - Zapisuje film MP4 oraz osobny plik TXT z opisem i źródłami.
@@ -39,9 +39,9 @@ Generator sprawdza długość lektora. Jeśli narracja trwa mniej niż 95 sekund
 
 ## Koszt i ograniczenia
 
-Projekt używa darmowych narzędzi: GitHub Actions, Python, Pillow, FFmpeg i Piper. Nie korzysta z płatnych API ani subskrypcji. Lektor jest syntezowany lokalnie w maszynie GitHub Actions.
+Projekt używa darmowych narzędzi: GitHub Actions, Python, Blender, Pillow, FFmpeg i Piper. Nie korzysta z płatnych API ani subskrypcji. Lektor jest syntezowany lokalnie w maszynie GitHub Actions.
 
-Animacje są obecnie tworzone z ilustracji 2D i ruchu kamery. To nie jest jeszcze generator realistycznych klipów wideo AI. Publikacja na YouTube nie jest automatyczna: przed publikacją człowiek powinien sprawdzić film, opis i źródła.
+Sceny są stylizowanymi animacjami 3D renderowanymi w Blenderze. Nie są to realistyczne klipy generowane przez model wideo AI. Publikacja na YouTube nie jest automatyczna: przed publikacją człowiek powinien sprawdzić film, opis i źródła.
 
 ## Struktura
 
