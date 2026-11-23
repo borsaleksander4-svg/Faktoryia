@@ -1,60 +1,50 @@
-name: Generuj film Faktoryia
-
+name: Generuj film Faktoryia 3D
 on:
   push:
     branches: [main]
-    paths:
-      - ".github/workflows/generate-short.yml"
-      - "src/**"
-      - "data/facts.json"
-      - "requirements.txt"
+    paths: [".github/workflows/generate-short.yml", "src/**", "data/facts.json", "requirements.txt"]
   workflow_dispatch:
     inputs:
       episode_id:
-        description: "ID ciekawostki (puste = losowa)"
+        description: "ID odcinka (puste = pierwszy)"
         required: false
         type: string
   schedule:
     - cron: "0 16 * * *"
-
 permissions:
   contents: read
-
 jobs:
   generate:
-    name: Renderuj dwuminutowy odcinek What If
+    name: Renderuj animowany odcinek 3D
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 90
     steps:
-      - name: Pobierz repozytorium
-        uses: actions/checkout@v7
-      - name: Przygotuj Python
-        uses: actions/setup-python@v7
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Zainstaluj FFmpeg i czcionki
+      - name: Instaluj Blender i FFmpeg
         run: |
           sudo apt-get update
-          sudo apt-get install --yes --no-install-recommends ffmpeg fonts-dejavu-core
-      - name: Zainstaluj biblioteki
+          sudo apt-get install --yes --no-install-recommends blender ffmpeg fonts-dejavu-core
+      - name: Instaluj biblioteki
         run: python -m pip install -r requirements.txt
-      - name: Pobierz polski głos neuronowy Piper
+      - name: Pobierz polski głos Piper
         run: |
           mkdir -p voices
           python -m piper.download_voices --download-dir voices pl_PL-darkman-medium
-      - name: Wygeneruj animowany film
+      - name: Renderuj film 3D
         env:
-          FACT_ID: ${{ github.event.inputs.episode_id }}
+          EPISODE_ID: \${{ github.event.inputs.episode_id }}
         run: |
-          if [ -n "$FACT_ID" ]; then
-            python src/generate.py --episode-id "$FACT_ID"
+          if [ -n "$EPISODE_ID" ]; then
+            python src/generate.py --episode-id "$EPISODE_ID"
           else
             python src/generate.py
           fi
-      - name: Zapisz gotowy film i opis
-        uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@v4
         with:
-          name: faktoryia-what-if-odcinek
+          name: faktoryia-3d-what-if
           path: output/
           if-no-files-found: error
           retention-days: 7
