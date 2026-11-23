@@ -4,7 +4,11 @@ from datetime import datetime,timezone
 from pathlib import Path
 from PIL import Image,ImageDraw,ImageFont
 ROOT=Path(__file__).resolve().parents[1]; DATA=ROOT/"data"/"facts.json"; OUT=ROOT/"output"; VOICE=ROOT/"voices"; FPS=12
-def run(c): subprocess.run(c,check=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+def run(c):
+ try: subprocess.run(c,check=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+ except subprocess.CalledProcessError as e:
+  print("COMMAND FAILED:", " ".join(map(str,c)), file=sys.stderr)
+  print(e.stdout or "", file=sys.stderr); print(e.stderr or "", file=sys.stderr); raise
 def caption(text,path):
  im=Image.new("RGBA",(1080,1920),(0,0,0,0)); d=ImageDraw.Draw(im); fp="/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"; f=ImageFont.truetype(fp,62) if Path(fp).exists() else ImageFont.load_default(); lines=[]; cur=""
  for word in text.split():
