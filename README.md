@@ -5,7 +5,7 @@ Automatyczny generator polskich filmów YouTube Shorts z ciekawostkami.
 ## Co robi obecna wersja
 
 - Wybiera ciekawostkę z `data/facts.json`.
-- Nie powtarza faktów, dopóki nie wykorzysta całej listy.
+- W automatycznym harmonogramie przechodzi przez listę faktów dzień po dniu, bez natychmiastowych powtórek.
 - Tworzy polską narrację głosową przez darmowy syntezator eSpeak NG.
 - Projektuje pionową planszę 1080 × 1920.
 - Łączy obraz i narrację w plik MP4 w formacie 9:16.
@@ -16,7 +16,7 @@ Automatyczny generator polskich filmów YouTube Shorts z ciekawostkami.
 
 ### Automatycznie
 
-Workflow jest zaplanowany na każdy dzień o 16:00 UTC. Godzina odpowiada 17:00 w Polsce zimą i 18:00 latem. Każde uruchomienie generuje jeden film.
+Workflow jest zaplanowany na każdy dzień o 16:00 UTC. Godzina odpowiada 17:00 w Polsce zimą i 18:00 latem. Każde uruchomienie generuje jeden film. Przy uruchomieniu automatycznym wybór faktu przechodzi po liście kolejno, dzień po dniu.
 
 ### Ręcznie
 
@@ -24,7 +24,7 @@ Workflow jest zaplanowany na każdy dzień o 16:00 UTC. Godzina odpowiada 17:00 
 2. Wejdź w zakładkę **Actions**.
 3. Wybierz workflow **Generuj film Faktoryia**.
 4. Kliknij **Run workflow**.
-5. Pole `fact_id` pozostaw puste, aby wybrać losowy niewykorzystany fakt, albo wpisz ID konkretnego faktu z `data/facts.json`.
+5. Pole `fact_id` pozostaw puste, aby wybrać losową ciekawostkę, albo wpisz ID konkretnego faktu z `data/facts.json`.
 6. Po zakończeniu otwórz wykonanie workflow i pobierz artefakt **faktoryia-short**.
 
 W archiwum ZIP znajdziesz film MP4 oraz plik TXT z opisem i źródłem. Artefakt jest przechowywany przez 7 dni, więc pobierz go przed upływem tego czasu.
@@ -56,6 +56,5 @@ Lektor eSpeak NG jest wyraźnie syntetyczny i brzmi bardziej mechanicznie niż k
 
 - `.github/workflows/generate-short.yml` — harmonogram i budowanie filmu.
 - `data/facts.json` — baza ciekawostek.
-- `data/history.json` — historia wykorzystanych ciekawostek.
 - `src/generate.py` — generator grafiki, narracji i MP4.
 - `requirements.txt` — biblioteki Pythona.
