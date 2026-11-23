@@ -115,7 +115,7 @@ def draw_scene(scene: dict, index: int, total: int, out: Path):
             d.ellipse((x-45,465,x+15,520), fill=(90,180,130,220))
 
     # Brand, chapter number and bold on-screen chapter caption.
-    d.rounded_rectangle((28, 34, 225, 78), radius=18, fill=(255,255,255,24), outline=(255,255,255,80), width=1)
+    d.rounded_rectangle((28, 34, 225, 78), radius=18, fill=(10,25,45,255), outline=(120,190,220,180), width=1)
     d.text((45, 46), "FAKTORYIA  |  CO, GDYBY?", font=font(14, True), fill=(255,220,160,255))
     d.text((30, 115), f"{index+1:02d} / {total:02d}", font=font(17, True), fill=(170,215,235,255))
     caption_font = font(31, True)
